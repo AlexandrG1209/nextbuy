@@ -6,3 +6,6 @@ plotly
 scikit-learn
 openmpi
 lightgbm
+joblib
+streamlit
+jupyter
