@@ -145,6 +145,7 @@ jupyter notebook notebook.ipynb
 The notebook contains:
 
 * Data cleaning
+* EDA
 * Feature engineering
 * Behavioral analysis
 * Machine learning model training
