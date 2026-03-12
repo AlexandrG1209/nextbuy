@@ -202,6 +202,13 @@ if user_id:
 # LOAD MODEL
 
 model_package = joblib.load("reorder_model.pkl")
+basket_package = joblib.load("basket_model.pkl")
+cart_model = joblib.load("cart_model.pkl")
+
+basket_model = basket_package["model"]
+basket_features = basket_package["features"]
+basket_model_type = basket_package["model_type"]
+basket_r2 = basket_package["accuracy"]
 
 model = model_package["model"]
 features = model_package["features"]
@@ -300,6 +307,70 @@ if user_id_input and product_name_input:
         st.warning("Product not found.")
 
 
+def basket_df(df):
+
+    order_col = (df.groupby(["user_id","order_id","order_number","order_hour_of_day","days_since_prior_order"])
+        .agg(
+            basket_size=('product_id','count'),
+            num_reordered=("reordered","sum"),
+            reorder_rate=("reordered","mean"),
+            num_departments=("department_id","nunique"),
+            num_aisles=("aisle_id","nunique"),
+        )
+        .reset_index()
+        .sort_values(["user_id","order_number"])
+    )
+
+    g = order_col.groupby("user_id")
+
+    order_col["target_next_basket_size"] = g["basket_size"].shift(-1)
+    order_col["avg_basket_size"] = g["basket_size"].transform("mean")
+
+    final_df = order_col.dropna(subset=["target_next_basket_size"]).copy()
+
+    return final_df
+
+@st.cache_data
+def build_basket_features(df):
+    return basket_df(df)
+
+df_basket = build_basket_features(df)
+
+
+st.header("Next Basket Size Prediction")
+
+st.subheader("Basket Prediction Model")
+
+c1, c2 = st.columns(2)
+
+c1.metric(
+    "Model type",
+    basket_model_type
+)
+
+c2.metric(
+    "R² score",
+    f"{basket_r2:.2f}"
+)
+
+user_id_basket = st.number_input("User ID for basket prediction", step=1, key="basket_user")
+
+if user_id_basket:
+
+    user_orders = df_basket[df_basket["user_id"] == user_id_basket]
+
+    if len(user_orders) > 0:
+
+        last_order = user_orders.sort_values("order_number").iloc[-1:]
+
+        X = last_order[basket_features]
+
+        pred = basket_model.predict(X)[0]
+
+        st.metric(
+            "Predicted next basket size",
+            int(round(pred))
+        )
 
 
 # ---------- DATA PREVIEW ----------
