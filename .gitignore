@@ -1,2 +1,18 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Jupyter Notebook
 .ipynb_checkpoints/
+
+# Datasets
 datasets/
+
+# macOS
+.DS_Store
